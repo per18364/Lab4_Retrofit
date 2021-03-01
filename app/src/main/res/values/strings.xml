@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Lab4_Retrofit</string>
+    <string name="escriba_el_nombre_de_un_pokemon">Escriba el nombre de un Pokemon</string>
+    <string name="buscar">buscar</string>
 </resources>
