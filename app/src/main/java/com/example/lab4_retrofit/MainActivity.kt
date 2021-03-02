@@ -2,6 +2,8 @@ package com.example.lab4_retrofit
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.SearchView
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.lab4_retrofit.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.time.temporal.TemporalQuery
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener{
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var adapter: PokemonAdapter
@@ -22,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.Search.setOnQueryTextListener(this)
         initTextView()
     }
 
@@ -42,13 +45,34 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val call = getRetrofit().create(Urls::class.java).getPokemonByName("$query")
             val poke = call.body()
-            if (call.isSuccessful){
-                //mostrar datos
-
-            }else{
-                //mostrar error
+            runOnUiThread{
+                if (call.isSuccessful){
+                    //mostrar datos
+                    val datos = poke?.datos ?: emptyList()
+                    pokemonData.clear()
+                    pokemonData.addAll(datos)
+                    adapter.notifyDataSetChanged()
+                }else{
+                    //mostrar error
+                    showError()
+                }
             }
         }
+    }
+
+    private fun showError() {
+        Toast.makeText(this, "Ha ocurrido un error", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        if (!query.isNullOrEmpty()){
+            searchByName(query.toLowerCase())
+        }
+        return true
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        return true
     }
 
 }

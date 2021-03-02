@@ -7,6 +7,6 @@ import retrofit2.http.Url
 interface Urls {
 
     @GET
-    fun getPokemonByName(@Url url:String):Response<ApiResponse>
+    suspend fun getPokemonByName(@Url url:String):Response<ApiResponse>
 
 }
