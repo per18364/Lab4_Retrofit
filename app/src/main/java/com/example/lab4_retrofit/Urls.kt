@@ -1,12 +1,8 @@
 package com.example.lab4_retrofit
 
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Url
 
-interface Urls {
+class Urls {
 
-    @GET
-    suspend fun getPokemonByName(@Url url:String):Response<ApiResponse>
+    var URL_BASE:String = "https://pokeapi.co/api/v2/pokemon/"
 
 }

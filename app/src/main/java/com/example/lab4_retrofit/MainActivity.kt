@@ -1,84 +1,69 @@
 package com.example.lab4_retrofit
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.SearchView
-import android.widget.Toast
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.lab4_retrofit.databinding.ActivityMainBinding
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.time.temporal.TemporalQuery
+import com.google.gson.JsonObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
-class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener{
+
+class MainActivity : AppCompatActivity(){
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: PokemonAdapter
-    private val pokemonData = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        binding.Search.setOnQueryTextListener(this)
-        initTextView()
-    }
+        val btn_buscar: Button = findViewById(R.id.btn_buscar)
+        val search: EditText = findViewById(R.id.Search)
+        val vista: TextView = findViewById(R.id.vistaInfo)
 
-    private fun initTextView() {
-        adapter = PokemonAdapter(pokemonData)
-        binding.vistaInfo.layoutManager = LinearLayoutManager(this)
-        binding.vistaInfo.adapter = adapter
-    }
+        btn_buscar.setOnClickListener {
+            run {
 
-    private fun getRetrofit():Retrofit{
-        return Retrofit.Builder()
-            .baseUrl("https://pokeapi.co/api/v2/pokemon/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+                val retrofit = Retrofit2()
 
-    private fun searchByName(query: String){
-        CoroutineScope(Dispatchers.IO).launch {
-            val call = getRetrofit().create(Urls::class.java).getPokemonByName("$query")
-            val poke = call.body()
-            runOnUiThread{
-                if (call.isSuccessful){
-                    //mostrar datos
-                    val datos = poke?.datos ?: emptyList()
-                    pokemonData.clear()
-                    pokemonData.addAll(datos)
-                    adapter.notifyDataSetChanged()
-                }else{
-                    //mostrar error
-                    showError()
-                }
+                val busqueda = search.text.toString().toLowerCase()
+
+                val call: Call<JsonObject> = retrofit.getService().getPokemonById(busqueda)
+
+                call.enqueue(object : Callback<JsonObject> {
+                    override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+
+                        val pokemon: JsonObject? = response.body()
+                        val name = pokemon?.get(10.toString())
+                        val height = pokemon?.get(4.toString())
+                        val weight = pokemon?.get(17.toString())
+                        val base_exp = pokemon?.get(1.toString())
+
+                        vista.setText("\n Nombre: " + name
+                                + "\n Altura: " + height
+                                + "\n Peso: " + weight
+                                + "\n Experiencia Inicial: " + base_exp)
+
+                    }
+
+                    override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+                        Log.e("error", "Algo ha fallado...")
+                    }
+
+                })
+
             }
         }
+
     }
 
-    private fun showError() {
-        Toast.makeText(this, "Ha ocurrido un error", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onQueryTextSubmit(query: String?): Boolean {
-        if (!query.isNullOrEmpty()){
-            searchByName(query.toLowerCase())
-        }
-        return true
-    }
-
-    override fun onQueryTextChange(newText: String?): Boolean {
-        return true
-    }
 
 }
-
-/*
-ApiResponse = DogsResponse
-Urls = APIService
-PokemonAdapter = DogAdapter
-*/
