@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.lab4_retrofit.databinding.ActivityMainBinding
 import com.google.gson.JsonObject
@@ -29,33 +30,56 @@ class MainActivity : AppCompatActivity(){
         val search: EditText = findViewById(R.id.Search)
         val vista: TextView = findViewById(R.id.vistaInfo)
 
+        val numeros = "0123456789"
+        val espacio = " "
+
         btn_buscar.setOnClickListener {
             run {
 
-                val retrofit = Retrofit2()
+                val retrofit2 = Retrofit2()
 
                 val busqueda = search.text.toString().toLowerCase()
 
-                val call: Call<JsonObject> = retrofit.getService().getPokemonById(busqueda)
+                if(search!!.text.any {it in numeros}) {
+                    val toast = Toast.makeText(applicationContext, "La busqueda no puede contener numeros", Toast.LENGTH_SHORT)
+                    toast.show()
+                    vista.text = ""
+                }
+                if (busqueda.length > 50) {
+                    val toast = Toast.makeText(applicationContext, "La busqueda no puede exceder los 50 caracteres", Toast.LENGTH_SHORT)
+                    toast.show()
+                    vista.text = ""
+                }
+                if(search!!.text.any {it in espacio}) {
+                    val toast = Toast.makeText(applicationContext, "La busqueda no puede contener espacios", Toast.LENGTH_SHORT)
+                    toast.show()
+                    vista.text = ""
+                }
+
+                val call: Call<JsonObject> = retrofit2.getService().getPokemonById(busqueda)
 
                 call.enqueue(object : Callback<JsonObject> {
                     override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                        if (response.isSuccessful){
+                            val pokemon: JsonObject? = response.body()
+                            val name = pokemon!!["name"].asString.capitalize()
 
-                        val pokemon: JsonObject? = response.body()
-                        val name = pokemon?.get(10.toString())
-                        val height = pokemon?.get(4.toString())
-                        val weight = pokemon?.get(17.toString())
-                        val base_exp = pokemon?.get(1.toString())
+                            assert(pokemon != null)
 
-                        vista.setText("\n Nombre: " + name
-                                + "\n Altura: " + height
-                                + "\n Peso: " + weight
-                                + "\n Experiencia Inicial: " + base_exp)
+                            var datos = ("\n Nombre: " + name
+                                    + "\n Altura: ${pokemon!!["height"]}"
+                                    + "\n Peso: ${pokemon!!["weight"]}"
+                                    + "\n Experiencia Inicial: ${pokemon!!["base_experience"]}")
+                            vista.text = datos
+                            Log.i("detalle", pokemon.toString())
+                        } else{0
+                            Log.e("error", "Hubo un error!")
+                        }
 
                     }
 
                     override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                        Log.e("error", "Algo ha fallado...")
+                        Log.e("error", t.toString())
                     }
 
                 })
@@ -67,3 +91,4 @@ class MainActivity : AppCompatActivity(){
 
 
 }
+
